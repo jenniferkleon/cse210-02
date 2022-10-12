@@ -1,17 +1,13 @@
-import random
-from game.deck import Deck
+from game.cards import Cards
 
 
 class Dealer:
-    """A person who directs the game. 
-    
-    The responsibility of a Dealer is to control the sequence of play.
-
+    """A Dealer who directs the game.
+    The responsibility of the Dealer is to control the game.
     Attributes:
-        dice (List[Die]): A list of Die instances.
+        currenCard (int): The current card value.
         is_playing (boolean): Whether or not the game is being played.
-        score (int): The score for one round of play.
-        total_score (int): The score for the entire game.
+        score (int): The score for the game.
     """
 
     def __init__(self):
@@ -20,14 +16,9 @@ class Dealer:
         Args:
             self (Dealer): an instance of Dealer.
         """
-        self.card = []
+        self.currentCard = Cards()
         self.is_playing = True
-        self.score = 0
-        self.total_score = 0
-
-        for i in range(1):
-            deck = Deck()
-            self.card.append(deck)
+        self.score = 300
 
     def start_game(self):
         """Starts the game by running the main game loop.
@@ -35,61 +26,93 @@ class Dealer:
         Args:
             self (Dealer): an instance of Dealer.
         """
-        self.deal_first_card()
         while self.is_playing:
-            
-            self.do_updates()
             self.get_inputs()
             self.do_outputs()
 
-   
-    def deal_first_card(self):
-        """"
-        Prints first value of card
-        """
-        self.value = random.randint(1, 13)
-        print(f"The card is: {self.value} ")
-
-
-
     def get_inputs(self):
-        """Ask the user if they want to roll.
-
+        """Ask the user if the next card will be higher or lower than the current card.
         Args:
-            self (Dealer): An instance of Dealer.
+            self (Dealer): an instance of Dealer.
         """
-        deal_card = input("Higher or Lower? [h/l] ")
-        self.is_playing = (deal_card == "h" or "l")
-       
-    def do_updates(self):
-        """Updates the player's score.
+        val = self.currentCard.value
+        print("The card is: %d" %val)
 
+        # The dealer enters either h or l to continue through game loop
+        dealerIn = ""
+        while dealerIn != "h" or dealerIn != "l":
+            dealerIn = input("Higher or lower? [h/l]: ")
+            oldCard = self.currentCard
+            newCard = Cards()
+            if(dealerIn == "h"):
+                self.get_high(oldCard, newCard)
+                break
+
+            elif(dealerIn == "l"):
+                self.get_low(oldCard, newCard)
+                break
+            else:
+                print("Invalid input")
+                print()
+
+    def do_updates(self, guess, newCard):
+        """Updates the dealer's score.
         Args:
-            self (Dealer): An instance of Dealer.
+            self (Dealer): an instance of Dealer.
         """
-        if not self.is_playing:
-            return 
+        #updating score
+        self.score += guess
+        if (self.score <= 0):
+            self.is_playing = False
+        #updating card
+        self.currentCard.value = newCard
 
-        for i in range(len(self.card)):
-            card = self.card[i]
-            card.deal()
-            self.score += card.points 
-        self.total_score += self.score
-
-    def do_outputs(self):
-        """Displays the dice and the score. Also asks the player if they want to roll again. 
-
-        Args:
-            self (Dealer): An instance of Dealer.
-        """
-        if not self.is_playing:
-            return
         
-        values = ""
-        for i in range(len(self.card)):
-            card = self.card[i]
-            values += f"{card.value} "
+    def do_outputs(self):
+        """Displays the cards and the score. Also asks if the want to keep playing
+        Args:
+            self (Dealer): an instance of Dealer.
+        """
+        print(f"Next card was: {self.currentCard.value}")
+        print(f"Your score is: {self.score}")
+        
 
-        print(f"You rolled: {values}")
-        print(f"Your score is: {self.total_score}\n")
-        self.is_playing == (self.score > 0)
+        if(self.score <= 0):
+            self.is_playing = False
+            return
+
+        #continues loop or terminates game
+        v = ""
+        while v != "n" or v != "y":
+            v = input("Play again [y/n]: ")
+            if(v == "n"):
+                self.is_playing = False
+                break
+            elif(v == "y"):
+                print("")
+                break
+            else:
+                print("Invalid input")
+
+
+    def get_high(self, card1, card2):
+        """If player chooses High and gets it right + 100 points
+       If wrong - 75 points."""
+        
+        if card2.value > card1.value:
+            self.do_updates(100, card2.value)
+            
+        elif card2.value < card1.value:
+            self.do_updates(-75, card2.value)
+
+
+    def get_low(self, card1, card2):
+        """If player chooses Low and gets it right + 100 points
+        If wrong - 75 points."""
+        if card2.value < card1.value:
+            self.do_updates(100, card2.value)
+        elif card2.value > card1.value:
+            self.do_updates(-75, card2.value)
+        else:
+            print("")
+            return
